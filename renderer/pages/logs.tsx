@@ -45,13 +45,13 @@ export default function LogsPage() {
         <title>Logs</title>
       </Head>
 
-      <main className="min-h-screen bg-[#111111] p-4 text-[#f2ede7]">
-        <section className="border border-[rgba(255,255,255,0.08)] bg-[#15110f] p-4">
-          <h1 className="text-sm font-bold uppercase tracking-[0.12em] text-[#f2ede7]">
+      <main className="min-h-screen bg-[#110518] p-4 text-[#f6ecff]">
+        <section className="border border-[rgba(231,214,255,0.12)] bg-[#1a0c27] p-4">
+          <h1 className="text-sm font-bold uppercase tracking-[0.12em] text-[#f6ecff]">
             Logs du launcher
           </h1>
 
-          <div className="mt-4 h-[calc(100vh-7rem)] overflow-auto whitespace-pre-wrap border border-[rgba(255,255,255,0.08)] bg-[#1a1512] p-4 font-mono text-xs leading-6 text-[#c9bbb0]">
+          <div className="mt-4 h-[calc(100vh-7rem)] overflow-auto whitespace-pre-wrap border border-[rgba(231,214,255,0.12)] bg-[#251038] p-4 font-mono text-xs leading-6 text-[#d7c1ec]">
             {logs.length > 0 ? logs.join('\n') : 'Aucun log pour le moment.'}
           </div>
         </section>

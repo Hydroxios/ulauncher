@@ -10,6 +10,34 @@
     "build": "nextron build",
     "postinstall": "electron-builder install-app-deps"
   },
+  "build": {
+    "appId": "com.example.nextron",
+    "productName": "My Nextron App",
+    "copyright": "Copyright © 2018 Yoshihide Shiono",
+    "directories": {
+      "output": "dist",
+      "buildResources": "resources"
+    },
+    "files": [
+      {
+        "from": ".",
+        "filter": [
+          "package.json",
+          "app"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "resources/icon.ico"
+    },
+    "mac": {
+      "icon": "resources/icon.icns"
+    },
+    "linux": {
+      "icon": "resources/icon.png"
+    },
+    "publish": null
+  },
   "dependencies": {
     "electron-serve": "^1.3.0",
     "electron-store": "^8.2.0",

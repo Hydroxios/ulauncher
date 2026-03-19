@@ -479,7 +479,7 @@ const openLogsWindow = async () => {
     minWidth: 720,
     minHeight: 480,
     frame: true,
-    backgroundColor: '#111111',
+    backgroundColor: '#110518',
     title: 'Logs',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -561,7 +561,7 @@ if (isProd) {
     minWidth: 1100,
     minHeight: 680,
     frame: false,
-    backgroundColor: '#050806',
+    backgroundColor: '#09030d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -625,7 +625,7 @@ ipcMain.handle('auth:login', async (): Promise<AuthResponse> => {
       height: 720,
       resizable: false,
       autoHideMenuBar: true,
-      backgroundColor: '#111111',
+      backgroundColor: '#110518',
       title: 'Connexion Microsoft',
     })
 

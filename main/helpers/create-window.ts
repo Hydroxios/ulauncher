@@ -4,7 +4,20 @@ import {
   BrowserWindowConstructorOptions,
   Rectangle,
 } from 'electron'
+import fs from 'fs'
+import path from 'path'
 import Store from 'electron-store'
+
+const resolveWindowIcon = () => {
+  const fileName = process.platform === 'linux' ? 'icon.png' : 'icon.ico'
+  const candidates = [
+    path.join(process.cwd(), 'resources', fileName),
+    path.join(process.resourcesPath, fileName),
+    path.join(process.resourcesPath, 'resources', fileName),
+  ]
+
+  return candidates.find((candidate) => fs.existsSync(candidate))
+}
 
 export const createWindow = (
   windowName: string,
@@ -74,6 +87,7 @@ export const createWindow = (
     ...state,
     ...options,
     autoHideMenuBar: true,
+    icon: options.icon ?? resolveWindowIcon(),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
