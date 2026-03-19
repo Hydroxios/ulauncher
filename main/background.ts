@@ -827,6 +827,9 @@ ipcMain.handle(
           max: `${settings.memoryGb}G`,
           min: `${minMemory}G`,
         },
+        overrides: {
+          detached: false,
+        },
         clientPackage: preparedPack.clientPackagePath,
         removePackage: Boolean(preparedPack.clientPackagePath),
       })
