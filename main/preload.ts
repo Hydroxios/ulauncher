@@ -1,13 +1,14 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
+import type { IpcEventChannel, IpcInvokeChannel, IpcSendChannel } from '../shared/ipc'
 
 const handler = {
-  send(channel: string, value?: unknown) {
+  send(channel: IpcSendChannel, value?: unknown) {
     ipcRenderer.send(channel, value)
   },
-  invoke(channel: string, value?: unknown) {
+  invoke(channel: IpcInvokeChannel, value?: unknown) {
     return ipcRenderer.invoke(channel, value)
   },
-  on(channel: string, callback: (...args: unknown[]) => void) {
+  on(channel: IpcEventChannel, callback: (...args: unknown[]) => void) {
     const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
       callback(...args)
     ipcRenderer.on(channel, subscription)

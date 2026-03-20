@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
-
-type LauncherEvent = {
-  type: string
-  payload: unknown
-  timestamp: number
-}
+import { formatLauncherEventLine, type LauncherEvent } from '../../shared/launcher'
+import { launcherIpc } from '../lib/launcher-ipc'
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<string[]>([])
@@ -14,7 +10,7 @@ export default function LogsPage() {
     let cancelled = false
 
     const loadLogs = async () => {
-      const response = (await window.ipc.invoke('launcher:get-logs')) as string[]
+      const response = await launcherIpc.getLogs()
 
       if (!cancelled) {
         setLogs(response)
@@ -23,15 +19,9 @@ export default function LogsPage() {
 
     loadLogs()
 
-    const unsubscribe = window.ipc.on('launcher:event', (eventData) => {
-      const event = eventData as LauncherEvent
-      const line =
-        typeof event.payload === 'string'
-          ? `[${event.type}] ${event.payload}`
-          : `[${event.type}] ${JSON.stringify(event.payload)}`
-
-      setLogs((current) => [...current, line].slice(-300))
-    })
+    const unsubscribe = launcherIpc.onLauncherEvent((event: LauncherEvent) =>
+      setLogs((current) => [...current, formatLauncherEventLine(event)].slice(-300))
+    )
 
     return () => {
       cancelled = true

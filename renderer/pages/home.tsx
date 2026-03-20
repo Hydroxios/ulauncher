@@ -1,57 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
-
-type LauncherAccount = {
-  username: string
-  uuid: string
-  xuid: string
-  skinUrl: string | null
-  avatarUrl: string | null
-}
-
-type AuthResponse = {
-  ok: boolean
-  account?: LauncherAccount
-  error?: string
-}
-
-type LauncherSettings = {
-  memoryGb: number
-  instanceDirectory: string
-  openLogsOnLaunch: boolean
-  packManifestUrl: string
-}
-
-type LauncherPackState = {
-  manifestUrl: string | null
-  packVersion: string | null
-  minecraftVersion: string | null
-  fabricLoaderVersion: string | null
-  installed: boolean
-  needsUpdate: boolean
-  status: 'not-configured' | 'not-installed' | 'ready' | 'update-available' | 'error'
-  error?: string
-}
-
-type LauncherStateResponse = {
-  ok: boolean
-  settings: LauncherSettings
-  pack: LauncherPackState
-  error?: string
-}
-
-type LauncherActionResponse = {
-  ok: boolean
-  settings?: LauncherSettings
-  pack?: LauncherPackState
-  error?: string
-}
-
-type LauncherEvent = {
-  type: string
-  payload: unknown
-  timestamp: number
-}
+import type { WindowControlChannel } from '../../shared/ipc'
+import type {
+  LauncherAccount,
+  LauncherEvent,
+  LauncherPackState,
+  LauncherSettings,
+} from '../../shared/launcher'
+import { launcherIpc } from '../lib/launcher-ipc'
 
 const sidebarBackgroundStyle = {
   backgroundImage:
@@ -123,10 +79,8 @@ export default function HomePage() {
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchStatus, setLaunchStatus] = useState<string | null>(null)
 
-  const handleWindowControl = (
-    channel: 'window:minimize' | 'window:toggle-maximize' | 'window:close'
-  ) => {
-    window.ipc.send(channel)
+  const handleWindowControl = (channel: WindowControlChannel) => {
+    launcherIpc.sendWindowControl(channel)
   }
 
   useEffect(() => {
@@ -134,7 +88,7 @@ export default function HomePage() {
 
     const restoreSession = async () => {
       try {
-        const response = (await window.ipc.invoke('auth:restore')) as AuthResponse
+        const response = await launcherIpc.restore()
 
         if (cancelled) {
           return
@@ -173,7 +127,7 @@ export default function HomePage() {
 
     const loadLauncherState = async () => {
       try {
-        const response = (await window.ipc.invoke('launcher:get-state')) as LauncherStateResponse
+        const response = await launcherIpc.getState()
 
         if (cancelled || !response.ok) {
           return
@@ -197,8 +151,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    const unsubscribe = window.ipc.on('launcher:event', (eventData) => {
-      const event = eventData as LauncherEvent
+    const unsubscribe = launcherIpc.onLauncherEvent((event: LauncherEvent) => {
 
       if (event.type === 'close') {
         setIsLaunching(false)
@@ -225,7 +178,7 @@ export default function HomePage() {
     setError(null)
 
     try {
-      const response = (await window.ipc.invoke('auth:login')) as AuthResponse
+      const response = await launcherIpc.login()
 
       if (response.ok && response.account) {
         setAccount(response.account)
@@ -247,7 +200,7 @@ export default function HomePage() {
     setError(null)
 
     try {
-      await window.ipc.invoke('auth:logout')
+      await launcherIpc.logout()
       setAccount(null)
       setLaunchStatus(null)
     } finally {
@@ -267,10 +220,7 @@ export default function HomePage() {
 
     setLauncherSettings(next)
 
-    const response = (await window.ipc.invoke(
-      'launcher:save-settings',
-      partial
-    )) as LauncherActionResponse
+    const response = await launcherIpc.saveSettings(partial)
 
     if (response.ok && response.settings) {
       setLauncherSettings(response.settings)
@@ -288,9 +238,7 @@ export default function HomePage() {
   }
 
   const handlePickInstanceDirectory = async () => {
-    const response = (await window.ipc.invoke(
-      'launcher:pick-instance-directory'
-    )) as LauncherActionResponse
+    const response = await launcherIpc.pickInstanceDirectory()
 
     if (response.ok && response.settings) {
       setLauncherSettings(response.settings)
@@ -307,10 +255,7 @@ export default function HomePage() {
     setLaunchStatus('Le pack sera reinstalle au prochain lancement.')
     setError(null)
 
-    const response = (await window.ipc.invoke(
-      'launcher:repair-pack',
-      launcherSettings
-    )) as LauncherActionResponse
+    const response = await launcherIpc.repairPack(launcherSettings)
 
     if (response.ok && response.settings) {
       setLauncherSettings(response.settings)
@@ -331,10 +276,7 @@ export default function HomePage() {
     setLaunchStatus('Preparation du lancement')
 
     try {
-      const response = (await window.ipc.invoke(
-        'launcher:launch',
-        launcherSettings
-      )) as LauncherActionResponse
+      const response = await launcherIpc.launch(launcherSettings)
 
       if (!response.ok) {
         setIsLaunching(false)
@@ -615,10 +557,7 @@ export default function HomePage() {
                               href="https://github.com/Hydroxios"
                               onClick={(event) => {
                                 event.preventDefault()
-                                void window.ipc.invoke(
-                                  'system:open-external',
-                                  'https://github.com/Hydroxios'
-                                )
+                                void launcherIpc.openExternal('https://github.com/Hydroxios')
                               }}
                               className="transition duration-150 hover:text-[#f6ecff]"
                             >
