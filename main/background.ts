@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import type { ChildProcessWithoutNullStreams } from 'child_process'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import type { WebContents } from 'electron'
 import serve from 'electron-serve'
 import Store from 'electron-store'
@@ -10,6 +10,10 @@ import { Auth } from 'msmc'
 import { createWindow } from './helpers'
 
 const isProd = process.env.NODE_ENV === 'production'
+const USER_DATA_DIRECTORY_NAME = isProd ? 'mlauncher' : 'mlauncher (development)'
+
+app.setPath('userData', path.join(app.getPath('appData'), USER_DATA_DIRECTORY_NAME))
+
 const PACK_STATE_FILE_NAME = '.uztik-pack.json'
 const PACK_CACHE_DIRECTORY = '.uztik-cache'
 const DEFAULT_PACK_MANIFEST_URL = process.env.UZTIK_PACK_MANIFEST_URL?.trim() ?? ''
@@ -856,8 +860,6 @@ const preparePack = async (
 
 if (isProd) {
   serve({ directory: 'app' })
-} else {
-  app.setPath('userData', `${app.getPath('userData')} (development)`)
 }
 
 ;(async () => {
@@ -924,18 +926,12 @@ ipcMain.removeHandler('launcher:launch')
 ipcMain.removeHandler('launcher:open-logs')
 ipcMain.removeHandler('launcher:get-logs')
 ipcMain.removeHandler('launcher:repair-pack')
+ipcMain.removeHandler('system:open-external')
 
 ipcMain.handle('auth:login', async (): Promise<AuthResponse> => {
   try {
     const authManager = createAuthManager()
-    const xbox = await authManager.launch('electron', {
-      width: 540,
-      height: 720,
-      resizable: false,
-      autoHideMenuBar: true,
-      backgroundColor: '#110518',
-      title: 'Connexion Microsoft',
-    })
+    const xbox = await authManager.launch('raw')
 
     const account = await loadAccountFromRefreshToken(xbox.save())
 
@@ -1042,6 +1038,18 @@ ipcMain.handle('launcher:open-logs', async (): Promise<LauncherActionResponse> =
 
 ipcMain.handle('launcher:get-logs', async () => {
   return [...launcherLogBuffer]
+})
+
+ipcMain.handle('system:open-external', async (_event, value: unknown) => {
+  const url = normalizeString(value)
+
+  if (!url) {
+    return { ok: false }
+  }
+
+  await shell.openExternal(url)
+
+  return { ok: true }
 })
 
 ipcMain.handle(

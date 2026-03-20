@@ -1,9 +1,9 @@
 {
   "private": true,
-  "name": "my-nextron-app",
-  "description": "My application description",
+  "name": "melyo-launcher",
+  "description": "Melyo Launcher",
   "version": "1.0.0",
-  "author": "Yoshihide Shiono <shiono.yoshihide@gmail.com>",
+  "author": "Hydroxios <contact@hydroxios.fr>",
   "main": "app/background.js",
   "scripts": {
     "dev": "nextron",
@@ -11,9 +11,9 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.example.nextron",
-    "productName": "My Nextron App",
-    "copyright": "Copyright © 2018 Yoshihide Shiono",
+    "appId": "fr.hydroxios.mlauncher",
+    "productName": "Melyo Launcher",
+    "copyright": "Copyright © 2026 Hydroxios",
     "directories": {
       "output": "dist",
       "buildResources": "resources"

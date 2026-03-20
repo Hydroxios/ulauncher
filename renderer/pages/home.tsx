@@ -370,7 +370,7 @@ export default function HomePage() {
               type="button"
               aria-label="Minimiser"
               onClick={() => handleWindowControl('window:minimize')}
-              className="flex h-12 w-12 items-center justify-center border-l border-[rgba(231,214,255,0.12)] bg-[rgba(22,10,33,0.96)] text-lg text-[#d9c3ee] transition duration-150 hover:bg-[rgba(231,214,255,0.08)]"
+              className="flex h-12 w-12 items-center justify-center bg-[rgba(22,10,33,0.96)] text-lg text-[#d9c3ee] transition duration-150 hover:bg-[rgba(231,214,255,0.08)]"
             >
               <span className="-mt-1">_</span>
             </button>
@@ -378,7 +378,7 @@ export default function HomePage() {
               type="button"
               aria-label="Maximiser ou restaurer"
               onClick={() => handleWindowControl('window:toggle-maximize')}
-              className="flex h-12 w-12 items-center justify-center border-l border-[rgba(231,214,255,0.12)] bg-[rgba(22,10,33,0.96)] text-sm text-[#d9c3ee] transition duration-150 hover:bg-[rgba(231,214,255,0.08)]"
+              className="flex h-12 w-12 items-center justify-center bg-[rgba(22,10,33,0.96)] text-sm text-[#d9c3ee] transition duration-150 hover:bg-[rgba(231,214,255,0.08)]"
             >
               <span className="inline-block h-3.5 w-3.5 border border-current" />
             </button>
@@ -386,7 +386,7 @@ export default function HomePage() {
               type="button"
               aria-label="Fermer"
               onClick={() => handleWindowControl('window:close')}
-              className="flex h-12 w-12 items-center justify-center border-l border-[rgba(231,214,255,0.12)] bg-[rgba(22,10,33,0.96)] text-lg text-[#f6dcff] transition duration-150 hover:bg-[#7a0fc0]"
+              className="flex h-12 w-12 items-center justify-center bg-[rgba(22,10,33,0.96)] text-lg text-[#f6dcff] transition duration-150 hover:bg-[#7a0fc0]"
             >
               <span>&times;</span>
             </button>
@@ -430,7 +430,7 @@ export default function HomePage() {
                           {account.username}
                         </p>
                         <p className="mt-1 truncate text-xs uppercase tracking-[0.12em] text-[#ab8ec8]">
-                          Microsoft connecte
+                          Connecté
                         </p>
                       </div>
                     </div>
@@ -607,6 +607,25 @@ export default function HomePage() {
                             </button>
                           </div>
                         ) : null}
+
+                        <div className="mt-6 flex justify-end">
+                          <p className="text-right text-xs text-[#ab8ec8]">
+                            Made with ❤️ by{' '}
+                            <a
+                              href="https://github.com/Hydroxios"
+                              onClick={(event) => {
+                                event.preventDefault()
+                                void window.ipc.invoke(
+                                  'system:open-external',
+                                  'https://github.com/Hydroxios'
+                                )
+                              }}
+                              className="transition duration-150 hover:text-[#f6ecff]"
+                            >
+                              Hydroxios
+                            </a>
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <div className="border border-[rgba(231,214,255,0.12)] bg-[rgba(22,10,33,0.72)] p-5 backdrop-blur-[2px]">

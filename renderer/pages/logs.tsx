@@ -51,7 +51,7 @@ export default function LogsPage() {
             Logs du launcher
           </h1>
 
-          <div className="mt-4 h-[calc(100vh-7rem)] overflow-auto whitespace-pre-wrap border border-[rgba(231,214,255,0.12)] bg-[#251038] p-4 font-mono text-xs leading-6 text-[#d7c1ec]">
+          <div className="mt-4 h-[calc(100vh-7rem)] overflow-auto whitespace-pre-wrap border border-[rgba(231,214,255,0.12)] bg-[#251038] p-2 font-mono text-xs leading-6 text-[#d7c1ec]">
             {logs.length > 0 ? logs.join('\n') : 'Aucun log pour le moment.'}
           </div>
         </section>
