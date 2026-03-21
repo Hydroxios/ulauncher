@@ -60,7 +60,7 @@ export const createWindowService = ({
       height: 620,
       minWidth: 720,
       minHeight: 480,
-      frame: true,
+      frame: false,
       backgroundColor: '#110518',
       title: 'Logs',
       webPreferences: {

@@ -21,6 +21,7 @@ export const launcherIpc = {
     invoke<LauncherActionResponse>(IPC_CHANNELS.launcherPickInstanceDirectory),
   launch: (settings: Partial<LauncherSettings>) =>
     invoke<LauncherActionResponse>(IPC_CHANNELS.launcherLaunch, settings),
+  closeGame: () => invoke<LauncherActionResponse>(IPC_CHANNELS.launcherCloseGame),
   openLogs: () => invoke<LauncherActionResponse>(IPC_CHANNELS.launcherOpenLogs),
   getLogs: () => invoke<string[]>(IPC_CHANNELS.launcherGetLogs),
   repairPack: (partial?: Partial<LauncherSettings>) =>

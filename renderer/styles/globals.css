@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes launcher-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -25,33 +35,40 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #a311f9 rgba(231, 214, 255, 0.12);
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
 
   *::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 6px;
+    height: 6px;
   }
 
   *::-webkit-scrollbar-track {
-    background: rgba(231, 214, 255, 0.08);
+    background: transparent;
   }
 
   *::-webkit-scrollbar-thumb {
-    border: 2px solid rgba(9, 3, 13, 0.82);
-    background: #a311f9;
+    border-radius: 0px;
+    background: rgba(255, 255, 255, 0.2);
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: #bb4fff;
+    background: rgba(255, 255, 255, 0.4);
   }
 
   *::-webkit-scrollbar-corner {
-    background: rgba(231, 214, 255, 0.08);
+    background: transparent;
   }
 
   a {
     color: inherit;
     text-decoration: none;
+  }
+}
+
+@layer utilities {
+  .launcher-progress-indeterminate {
+    animation: launcher-progress-indeterminate 1.15s linear infinite;
+    will-change: transform;
   }
 }

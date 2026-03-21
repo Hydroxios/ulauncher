@@ -133,4 +133,5 @@ export const registerIpcHandlers = ({
   ipcMain.handle(IPC_CHANNELS.launcherLaunch, (event, partial) =>
     gameLaunchService.launch(event.sender, partial)
   )
+  ipcMain.handle(IPC_CHANNELS.launcherCloseGame, () => gameLaunchService.closeGame())
 }

@@ -76,6 +76,14 @@ export type LauncherEvent = {
   timestamp: number
 }
 
+export type LauncherProgressPayload = {
+  type: string
+  task: number
+  total: number
+  unit?: 'items' | 'bytes'
+  label?: string
+}
+
 export const formatLauncherEventLine = (event: Pick<LauncherEvent, 'type' | 'payload'>) =>
   typeof event.payload === 'string'
     ? `[${event.type}] ${event.payload}`

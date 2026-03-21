@@ -18,6 +18,27 @@ type GameLaunchServiceDependencies = {
   settingsService: SettingsService
 }
 
+type LauncherProgressMessage = {
+  type?: string
+  task?: number
+  total?: number
+  unit?: 'items' | 'bytes'
+  label?: string
+}
+
+type LauncherDownloadStatusMessage = {
+  name?: string
+  type?: string
+  current?: number
+  total?: number
+}
+
+type SmoothedProgressTracker = {
+  completedTasks: number
+  totalTasks: number
+  activeDownloads: Map<string, { current: number; total: number }>
+}
+
 export const createGameLaunchService = ({
   authService,
   javaService,
@@ -60,6 +81,8 @@ export const createGameLaunchService = ({
     try {
       const { minecraft } = await authService.refreshMinecraftSession(session.refreshToken)
       const launcher = new Client()
+      const smoothedProgressTypes = new Set(['assets', 'natives'])
+      const smoothedProgressTrackers = new Map<string, SmoothedProgressTracker>()
 
       if (settings.openLogsOnLaunch) {
         await openLogsWindow()
@@ -75,14 +98,120 @@ export const createGameLaunchService = ({
         sender
       )
 
+      const emitSmoothedProgress = (type: string) => {
+        const tracker = smoothedProgressTrackers.get(type)
+
+        if (!tracker || tracker.totalTasks <= 0) {
+          return
+        }
+
+        const activeDownloadFraction = [...tracker.activeDownloads.values()].reduce(
+          (total, download) => {
+            if (!Number.isFinite(download.total) || download.total <= 0) {
+              return total
+            }
+
+            return total + Math.min(download.current / download.total, 0.99)
+          },
+          0
+        )
+
+        launcherEventsService.emit(sender, 'progress', {
+          type,
+          task: Math.min(tracker.totalTasks, tracker.completedTasks + activeDownloadFraction),
+          total: tracker.totalTasks,
+          unit: 'items',
+        })
+      }
+
+      const isLauncherProgressMessage = (value: unknown): value is LauncherProgressMessage => {
+        if (!value || typeof value !== 'object') {
+          return false
+        }
+
+        const message = value as LauncherProgressMessage
+
+        return (
+          typeof message.type === 'string' &&
+          typeof message.task === 'number' &&
+          Number.isFinite(message.task) &&
+          typeof message.total === 'number' &&
+          Number.isFinite(message.total)
+        )
+      }
+
+      const isLauncherDownloadStatusMessage = (
+        value: unknown
+      ): value is LauncherDownloadStatusMessage => {
+        if (!value || typeof value !== 'object') {
+          return false
+        }
+
+        const message = value as LauncherDownloadStatusMessage
+
+        return (
+          typeof message.name === 'string' &&
+          typeof message.type === 'string' &&
+          typeof message.current === 'number' &&
+          Number.isFinite(message.current) &&
+          typeof message.total === 'number' &&
+          Number.isFinite(message.total)
+        )
+      }
+
       launcher.on('debug', (message) =>
         launcherEventsService.emit(sender, 'debug', String(message))
       )
       launcher.on('data', (message) => launcherEventsService.emit(sender, 'data', String(message)))
-      launcher.on('progress', (message) => launcherEventsService.emit(sender, 'progress', message))
-      launcher.on('package-extract', () =>
-        launcherEventsService.emit(sender, 'status', 'Pack extrait dans l instance')
-      )
+      launcher.on('progress', (message) => {
+        if (!isLauncherProgressMessage(message) || !smoothedProgressTypes.has(message.type)) {
+          launcherEventsService.emit(sender, 'progress', message)
+          return
+        }
+
+        const tracker = smoothedProgressTrackers.get(message.type) ?? {
+          completedTasks: 0,
+          totalTasks: message.total,
+          activeDownloads: new Map<string, { current: number; total: number }>(),
+        }
+
+        tracker.completedTasks = message.task
+        tracker.totalTasks = message.total
+
+        if (tracker.completedTasks >= tracker.totalTasks) {
+          tracker.activeDownloads.clear()
+        } else {
+          for (const [name, download] of tracker.activeDownloads.entries()) {
+            if (download.current >= download.total) {
+              tracker.activeDownloads.delete(name)
+            }
+          }
+        }
+
+        smoothedProgressTrackers.set(message.type, tracker)
+        emitSmoothedProgress(message.type)
+      })
+      launcher.on('download-status', (message) => {
+        if (
+          !isLauncherDownloadStatusMessage(message) ||
+          !smoothedProgressTypes.has(message.type) ||
+          message.total <= 0
+        ) {
+          return
+        }
+
+        const tracker = smoothedProgressTrackers.get(message.type)
+
+        if (!tracker || tracker.totalTasks <= 0) {
+          return
+        }
+
+        tracker.activeDownloads.set(message.name, {
+          current: message.current,
+          total: message.total,
+        })
+        emitSmoothedProgress(message.type)
+      })
       launcher.on('close', (code) => {
         launcherEventsService.emit(sender, 'close', code)
         activeMinecraftProcess = null
@@ -108,8 +237,6 @@ export const createGameLaunchService = ({
         overrides: {
           detached: false,
         },
-        clientPackage: preparedPack.clientPackagePath,
-        removePackage: Boolean(preparedPack.clientPackagePath),
       })
 
       if (!process) {
@@ -149,7 +276,30 @@ export const createGameLaunchService = ({
     }
   }
 
+  const closeGame = async (): Promise<LauncherActionResponse> => {
+    if (!activeMinecraftProcess) {
+      return {
+        ok: false,
+        error: 'Minecraft n est pas en cours dexecution.',
+      }
+    }
+
+    try {
+      activeMinecraftProcess.kill()
+
+      return {
+        ok: true,
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        error: toErrorMessage(error),
+      }
+    }
+  }
+
   return {
+    closeGame,
     launch,
   }
 }

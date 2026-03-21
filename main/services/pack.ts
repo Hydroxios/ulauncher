@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import type { WebContents } from 'electron'
+import { Worker } from 'worker_threads'
 import type {
   InstalledPackState,
   LauncherPackState,
@@ -34,14 +35,121 @@ export type PreparedPack = {
   manifest: PackManifest
   fabricProfileId: string
   installedState: InstalledPackState
-  clientPackagePath?: string
 }
 
 type PackServiceDependencies = {
   emitLauncherEvent: (sender: WebContents | null, type: string, payload: unknown) => void
 }
 
+type WorkerExtractionMessage =
+  | {
+      type: 'complete'
+    }
+  | {
+      type: 'error'
+      error?: string
+    }
+  | {
+      type: 'progress'
+      task: number
+      total: number
+    }
+
 export const createPackService = ({ emitLauncherEvent }: PackServiceDependencies) => {
+  const extractPackArchive = async (
+    archivePath: string,
+    destination: string,
+    sender: WebContents | null,
+    label: string
+  ): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const worker = new Worker(
+        `
+          const { parentPort, workerData } = require('worker_threads')
+
+          try {
+            const Zip = require(workerData.admZipModulePath)
+            const zip = new Zip(workerData.archivePath)
+            const entries = zip.getEntries().filter((entry) => !entry.isDirectory)
+            let extractedEntries = 0
+
+            parentPort.postMessage({
+              type: 'progress',
+              task: 0,
+              total: entries.length,
+            })
+
+            for (const entry of entries) {
+              zip.extractEntryTo(entry, workerData.destination, true, true)
+              extractedEntries += 1
+              parentPort.postMessage({
+                type: 'progress',
+                task: extractedEntries,
+                total: entries.length,
+              })
+            }
+
+            parentPort.postMessage({ type: 'complete' })
+          } catch (error) {
+            parentPort.postMessage({
+              type: 'error',
+              error: error instanceof Error ? error.message : String(error),
+            })
+          }
+        `,
+        {
+          eval: true,
+          workerData: {
+            admZipModulePath: require.resolve('adm-zip'),
+            archivePath,
+            destination,
+          },
+        }
+      )
+      let settled = false
+
+      const settle = (callback: () => void) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        callback()
+      }
+
+      worker.on('message', (message: WorkerExtractionMessage) => {
+        if (message.type === 'progress') {
+          emitLauncherEvent(sender, 'progress', {
+            type: 'pack-extract',
+            task: message.task,
+            total: message.total,
+            unit: 'items',
+            label,
+          })
+          return
+        }
+
+        settle(() => {
+          if (message.type === 'complete') {
+            resolve()
+            return
+          }
+
+          reject(new Error(message.error || 'Extraction du pack impossible.'))
+        })
+      })
+      worker.once('error', (error) => {
+        settle(() => reject(error))
+      })
+      worker.once('exit', (code) => {
+        if (code === 0) {
+          return
+        }
+
+        settle(() => reject(new Error(`Extraction du pack interrompue (code ${code}).`)))
+      })
+    })
+
   const getPackStatePath = (instanceDirectory: string) =>
     path.join(instanceDirectory, PACK_STATE_FILE_NAME)
 
@@ -278,12 +386,37 @@ export const createPackService = ({ emitLauncherEvent }: PackServiceDependencies
     const clientPackagePath = getPackCachePath(instanceDirectory, manifest.packVersion)
 
     emitLauncherEvent(sender, 'status', `Telechargement du pack ${manifest.packVersion}`)
-    await downloadToFile(manifest.packUrl, clientPackagePath)
+    emitLauncherEvent(sender, 'progress', {
+      type: 'pack-download',
+      task: 0,
+      total: 0,
+      unit: 'bytes',
+      label: `Pack ${manifest.packVersion}`,
+    })
+    await downloadToFile(manifest.packUrl, clientPackagePath, {
+      onProgress: ({ receivedBytes, totalBytes }) => {
+        emitLauncherEvent(sender, 'progress', {
+          type: 'pack-download',
+          task: receivedBytes,
+          total: totalBytes ?? 0,
+          unit: 'bytes',
+          label: `Pack ${manifest.packVersion}`,
+        })
+      },
+    })
+
+    emitLauncherEvent(sender, 'status', `Extraction du pack ${manifest.packVersion}`)
+    await extractPackArchive(
+      clientPackagePath,
+      instanceDirectory,
+      sender,
+      `Pack ${manifest.packVersion}`
+    )
+    await fs.promises.rm(clientPackagePath, { force: true })
 
     return {
       manifest,
       fabricProfileId,
-      clientPackagePath,
       installedState: {
         packVersion: manifest.packVersion,
         minecraftVersion: manifest.minecraftVersion,

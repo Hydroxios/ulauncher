@@ -218,12 +218,24 @@ export const createJavaService = ({ emitLauncherEvent }: JavaServiceDependencies
     const runtimeManifest = await fetchJson<JavaRuntimeManifest>(descriptor.manifestUrl)
     const runtimeDirectory = getJavaRuntimeDirectory(descriptor)
     const temporaryDirectory = `${runtimeDirectory}.tmp-${Date.now()}`
+    const runtimeEntries = Object.entries(runtimeManifest.files ?? {})
+    const progressLabel = `Java ${descriptor.majorVersion}`
+    const totalTasks = runtimeEntries.filter(([, file]) => file && file.type !== 'directory').length
+    let completedTasks = 0
 
     await fs.promises.rm(temporaryDirectory, { recursive: true, force: true })
     await fs.promises.mkdir(temporaryDirectory, { recursive: true })
 
+    emitLauncherEvent(sender, 'progress', {
+      type: 'java-runtime',
+      task: 0,
+      total: totalTasks,
+      unit: 'items',
+      label: progressLabel,
+    })
+
     try {
-      for (const [relativePath, file] of Object.entries(runtimeManifest.files ?? {})) {
+      for (const [relativePath, file] of runtimeEntries) {
         if (!file) {
           continue
         }
@@ -244,6 +256,14 @@ export const createJavaService = ({ emitLauncherEvent }: JavaServiceDependencies
 
           await fs.promises.mkdir(path.dirname(destinationPath), { recursive: true })
           await fs.promises.symlink(targetPath, destinationPath)
+          completedTasks += 1
+          emitLauncherEvent(sender, 'progress', {
+            type: 'java-runtime',
+            task: completedTasks,
+            total: totalTasks,
+            unit: 'items',
+            label: progressLabel,
+          })
           continue
         }
 
@@ -254,6 +274,14 @@ export const createJavaService = ({ emitLauncherEvent }: JavaServiceDependencies
         }
 
         await downloadToFile(downloadUrl, destinationPath)
+        completedTasks += 1
+        emitLauncherEvent(sender, 'progress', {
+          type: 'java-runtime',
+          task: completedTasks,
+          total: totalTasks,
+          unit: 'items',
+          label: progressLabel,
+        })
 
         if (file.executable && process.platform !== 'win32') {
           await fs.promises.chmod(destinationPath, 0o755)
@@ -267,6 +295,14 @@ export const createJavaService = ({ emitLauncherEvent }: JavaServiceDependencies
       await fs.promises.rm(temporaryDirectory, { recursive: true, force: true })
       throw error
     }
+
+    emitLauncherEvent(sender, 'progress', {
+      type: 'java-runtime',
+      task: totalTasks,
+      total: totalTasks,
+      unit: 'items',
+      label: progressLabel,
+    })
 
     emitLauncherEvent(
       sender,
