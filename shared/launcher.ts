@@ -55,10 +55,24 @@ export type LauncherPackState = {
   error?: string
 }
 
+export type LauncherServerStatus = 'not-configured' | 'online' | 'offline'
+
+export type LauncherServerState = {
+  address: string | null
+  onlinePlayers: number | null
+  maxPlayers: number | null
+  players: string[]
+  status: LauncherServerStatus
+  version: string | null
+  latencyMs: number | null
+  error?: string
+}
+
 export type LauncherStateResponse = {
   ok: boolean
   settings: LauncherSettings
   pack: LauncherPackState
+  server: LauncherServerState
   error?: string
 }
 
@@ -66,6 +80,12 @@ export type LauncherActionResponse = {
   ok: boolean
   settings?: LauncherSettings
   pack?: LauncherPackState
+  error?: string
+}
+
+export type LauncherServerResponse = {
+  ok: boolean
+  server: LauncherServerState
   error?: string
 }
 

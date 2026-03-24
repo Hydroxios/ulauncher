@@ -8,6 +8,7 @@ import { createLauncherEventsService } from './services/events'
 import { createGameLaunchService } from './services/game-launch'
 import { createJavaService } from './services/java'
 import { createPackService } from './services/pack'
+import { createServerStatusService } from './services/server-status'
 import { configureUserDataPath, createSettingsService } from './services/settings'
 import { createWindowService } from './services/windows'
 
@@ -23,6 +24,7 @@ if (isProd) {
 
 const preloadPath = path.join(__dirname, 'preload.js')
 const settingsService = createSettingsService()
+const serverStatusService = createServerStatusService()
 const authService = createAuthService()
 const windowService = createWindowService({
   isProd,
@@ -52,6 +54,7 @@ registerIpcHandlers({
   gameLaunchService,
   launcherEventsService,
   packService,
+  serverStatusService,
   settingsService,
   windowService,
 })

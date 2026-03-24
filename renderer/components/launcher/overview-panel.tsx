@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { LauncherAccount, LauncherPackState, LauncherSettings } from '../../../shared/launcher'
+import type {
+  LauncherAccount,
+  LauncherPackState,
+  LauncherServerState,
+  LauncherSettings,
+} from '../../../shared/launcher'
 import type { LaunchProgressState } from '../../hooks/use-launcher-home-state'
 import { PackStatusBadge } from './status'
 
@@ -18,15 +23,9 @@ type OverviewPanelProps = {
   launchProgress: LaunchProgressState | null
   launchStatus: string | null
   launcherPack: LauncherPackState | null
+  launcherServer: LauncherServerState | null
   launcherSettings: LauncherSettings | null
 }
-
-const mockOnlinePlayers = [
-  "Hydroxios",
-  "Koda_62",
-  "uzt1k",
-  "Azurria44"
-]
 
 const formatProgressValue = (progress: LaunchProgressState) => {
   if (progress.unit === 'bytes') {
@@ -53,9 +52,11 @@ export const OverviewPanel = ({
   launchProgress,
   launchStatus,
   launcherPack,
+  launcherServer,
   launcherSettings,
 }: OverviewPanelProps) => {
-  const hasOnlinePlayers = mockOnlinePlayers.length > 0
+  const onlinePlayers = launcherServer?.players ?? []
+  const hasOnlinePlayers = onlinePlayers.length > 0
   const isGameLaunched = isLaunching && launchStatus === 'Minecraft lance.' && !launchProgress
   const [displayedProgressWidth, setDisplayedProgressWidth] = useState<number | null>(null)
   const isIndeterminateProgress = Boolean(launchProgress && launchProgress.percent == null)
@@ -120,6 +121,23 @@ export const OverviewPanel = ({
   const shouldShowLaunchPanel =
     !isGameLaunched &&
     (Boolean(launchProgress) || (isLaunching && Boolean(launchStatus)) || Boolean(error))
+  const serverStatusLabel =
+    launcherServer?.status === 'online'
+      ? launcherServer.maxPlayers != null
+        ? `${launcherServer.onlinePlayers ?? 0}/${launcherServer.maxPlayers} en ligne`
+        : `${launcherServer.onlinePlayers ?? 0} en ligne`
+      : launcherServer?.status === 'offline'
+        ? 'Serveur hors ligne'
+        : 'Serveur offline'
+  const serverMeta =
+    launcherServer?.status === 'online'
+      ? [
+          launcherServer.version ? `Version ${launcherServer.version}` : null,
+          launcherServer.latencyMs != null ? `${launcherServer.latencyMs} ms` : null,
+        ]
+          .filter(Boolean)
+          .join(' • ')
+      : launcherServer?.error ?? null
 
   return (
     <section
@@ -136,14 +154,17 @@ export const OverviewPanel = ({
                     Joueurs connectes
                   </p>
                   <p className="mt-2 text-2xl font-black uppercase tracking-[0.05em] text-white">
-                    {mockOnlinePlayers.length} en ligne
+                    {serverStatusLabel}
                   </p>
+                  {serverMeta ? (
+                    <p className="mt-2 text-sm text-white/60">{serverMeta}</p>
+                  ) : null}
                 </div>
               </div>
 
               <div className={`${hasOnlinePlayers ? 'grid gap-2' : 'hidden'}`}>
                 {hasOnlinePlayers ? (
-                  mockOnlinePlayers.map((player) => (
+                  onlinePlayers.map((player) => (
                     <div
                       key={player}
                       className="flex flex-row items-center justify-start gap-4 border border-white/10 bg-white/5 px-4 py-2"

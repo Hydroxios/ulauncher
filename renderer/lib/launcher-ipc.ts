@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   LauncherActionResponse,
   LauncherEvent,
+  LauncherServerResponse,
   LauncherSettings,
   LauncherStateResponse,
 } from '../../shared/launcher'
@@ -15,6 +16,8 @@ export const launcherIpc = {
   restore: () => invoke<AuthResponse>(IPC_CHANNELS.authRestore),
   logout: () => invoke<AuthResponse>(IPC_CHANNELS.authLogout),
   getState: () => invoke<LauncherStateResponse>(IPC_CHANNELS.launcherGetState),
+  getServerStatus: () =>
+    invoke<LauncherServerResponse>(IPC_CHANNELS.launcherGetServerStatus),
   saveSettings: (partial: Partial<LauncherSettings>) =>
     invoke<LauncherActionResponse>(IPC_CHANNELS.launcherSaveSettings, partial),
   pickInstanceDirectory: () =>

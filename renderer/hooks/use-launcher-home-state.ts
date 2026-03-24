@@ -4,6 +4,7 @@ import type {
   LauncherActionResponse,
   LauncherEvent,
   LauncherPackState,
+  LauncherServerState,
   LauncherProgressPayload,
   LauncherSettings,
 } from '../../shared/launcher'
@@ -99,6 +100,7 @@ export const useLauncherHomeState = () => {
   const [error, setError] = useState<string | null>(null)
   const [launcherSettings, setLauncherSettings] = useState<LauncherSettings | null>(null)
   const [launcherPack, setLauncherPack] = useState<LauncherPackState | null>(null)
+  const [launcherServer, setLauncherServer] = useState<LauncherServerState | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isLaunching, setIsLaunching] = useState(false)
   const [isGameRunning, setIsGameRunning] = useState(false)
@@ -157,6 +159,7 @@ export const useLauncherHomeState = () => {
 
         setLauncherSettings(response.settings)
         setLauncherPack(response.pack)
+        setLauncherServer(response.server)
       } catch {
         if (!cancelled) {
           setLauncherPack(null)
@@ -168,6 +171,34 @@ export const useLauncherHomeState = () => {
 
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const refreshServerStatus = async () => {
+      try {
+        const response = await launcherIpc.getServerStatus()
+
+        if (!cancelled && response.ok) {
+          setLauncherServer(response.server)
+        }
+      } catch {
+        if (!cancelled) {
+          setLauncherServer((current) => current)
+        }
+      }
+    }
+
+    void refreshServerStatus()
+    const intervalId = window.setInterval(() => {
+      void refreshServerStatus()
+    }, 30000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
     }
   }, [])
 
@@ -363,6 +394,7 @@ export const useLauncherHomeState = () => {
     launchStatus,
     launchProgress,
     launcherPack,
+    launcherServer,
     launcherSettings,
     openExternal,
     openLogsNow,

@@ -21,6 +21,7 @@ export default function HomePage() {
     launchProgress,
     launchStatus,
     launcherPack,
+    launcherServer,
     launcherSettings,
     openExternal,
     openLogsNow,
@@ -93,6 +94,7 @@ export default function HomePage() {
                     launchProgress={launchProgress}
                     launchStatus={launchStatus}
                     launcherPack={launcherPack}
+                    launcherServer={launcherServer}
                     launcherSettings={launcherSettings}
                   />
                 )}

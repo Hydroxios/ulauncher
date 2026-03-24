@@ -4,6 +4,7 @@ import type { AuthService } from '../services/auth'
 import type { GameLaunchService } from '../services/game-launch'
 import type { LauncherEventsService } from '../services/events'
 import type { PackService } from '../services/pack'
+import type { ServerStatusService } from '../services/server-status'
 import type { SettingsService } from '../services/settings'
 import type { WindowService } from '../services/windows'
 
@@ -12,6 +13,7 @@ type RegisterHandlersDependencies = {
   gameLaunchService: GameLaunchService
   launcherEventsService: LauncherEventsService
   packService: PackService
+  serverStatusService: ServerStatusService
   settingsService: SettingsService
   windowService: WindowService
 }
@@ -21,6 +23,7 @@ export const registerIpcHandlers = ({
   gameLaunchService,
   launcherEventsService,
   packService,
+  serverStatusService,
   settingsService,
   windowService,
 }: RegisterHandlersDependencies) => {
@@ -54,13 +57,20 @@ export const registerIpcHandlers = ({
       settings.instanceDirectory,
       settingsService.getPackManifestUrl()
     )
+    const server = await serverStatusService.getServerStatus()
 
     return {
       ok: true,
       settings,
       pack,
+      server,
     }
   })
+
+  ipcMain.handle(IPC_CHANNELS.launcherGetServerStatus, async () => ({
+    ok: true,
+    server: await serverStatusService.getServerStatus(),
+  }))
 
   ipcMain.handle(IPC_CHANNELS.launcherSaveSettings, async (_event, partial) => {
     const settings = settingsService.saveSettings(partial)

@@ -180,6 +180,20 @@ MANIFEST_URL=https://example.com/manifest.json
 
 Cette valeur n'est pas stockée dans les settings locaux et n'est pas éditable dans l'UI.
 
+## Variable d'environnement du serveur
+
+Le statut multijoueur est résolu à partir de l'environnement:
+
+```bash
+SERVER_ADDRESS=play.example.com
+```
+
+Tu peux aussi préciser le port:
+
+```bash
+SERVER_ADDRESS=play.example.com:25565
+```
+
 ## Auth Microsoft
 
 La connexion Microsoft est gérée avec `msmc`.

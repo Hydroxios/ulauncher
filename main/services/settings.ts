@@ -8,8 +8,6 @@ type PersistedLauncherSettings = Partial<LauncherSettings> & {
   packManifestUrl?: string
 }
 
-const DEFAULT_PACK_MANIFEST_URL = normalizeString(process.env.MANIFEST_URL)
-
 export const configureUserDataPath = (isProd: boolean) => {
   const userDataDirectoryName = isProd ? 'mlauncher' : 'mlauncher (development)'
   app.setPath('userData', path.join(app.getPath('appData'), userDataDirectoryName))
@@ -67,7 +65,7 @@ export const createSettingsService = () => {
 
   return {
     getDefaultLauncherSettings,
-    getPackManifestUrl: () => DEFAULT_PACK_MANIFEST_URL,
+    getPackManifestUrl: () => normalizeString(process.env.MANIFEST_URL),
     getSettings,
     saveSettings,
     shouldRefreshPackState,
