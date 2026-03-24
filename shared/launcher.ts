@@ -20,7 +20,6 @@ export type LauncherSettings = {
   memoryGb: number
   instanceDirectory: string
   openLogsOnLaunch: boolean
-  packManifestUrl: string
 }
 
 export type PackManifest = {

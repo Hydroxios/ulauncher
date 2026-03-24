@@ -4,7 +4,11 @@ import Store from 'electron-store'
 import type { LauncherSettings } from '../../shared/launcher'
 import { normalizeString } from '../utils/common'
 
-const DEFAULT_PACK_MANIFEST_URL = process.env.UZTIK_PACK_MANIFEST_URL?.trim() ?? ''
+type PersistedLauncherSettings = Partial<LauncherSettings> & {
+  packManifestUrl?: string
+}
+
+const DEFAULT_PACK_MANIFEST_URL = normalizeString(process.env.MANIFEST_URL)
 
 export const configureUserDataPath = (isProd: boolean) => {
   const userDataDirectoryName = isProd ? 'mlauncher' : 'mlauncher (development)'
@@ -12,7 +16,7 @@ export const configureUserDataPath = (isProd: boolean) => {
 }
 
 export const createSettingsService = () => {
-  const launcherStore = new Store<{ settings?: LauncherSettings }>({
+  const launcherStore = new Store<{ settings?: PersistedLauncherSettings }>({
     name: 'launcher-settings',
   })
 
@@ -20,28 +24,33 @@ export const createSettingsService = () => {
     memoryGb: 4,
     instanceDirectory: path.join(app.getPath('appData'), '.minecraft'),
     openLogsOnLaunch: false,
-    packManifestUrl: DEFAULT_PACK_MANIFEST_URL,
   })
 
-  const getSettings = (): LauncherSettings => {
-    const stored = launcherStore.get('settings')
+  const sanitizeLauncherSettings = (
+    value?: Partial<PersistedLauncherSettings>
+  ): LauncherSettings => {
+    const defaults = getDefaultLauncherSettings()
+    const next = {
+      ...defaults,
+      ...value,
+    }
 
     return {
-      ...getDefaultLauncherSettings(),
-      ...stored,
+      memoryGb: Math.max(1, Math.min(16, Number(next.memoryGb) || defaults.memoryGb)),
+      instanceDirectory: normalizeString(next.instanceDirectory) || defaults.instanceDirectory,
+      openLogsOnLaunch: Boolean(next.openLogsOnLaunch),
     }
   }
 
+  const getSettings = (): LauncherSettings => {
+    return sanitizeLauncherSettings(launcherStore.get('settings'))
+  }
+
   const saveSettings = (partial?: Partial<LauncherSettings>) => {
-    const next = {
+    const next = sanitizeLauncherSettings({
       ...getSettings(),
       ...partial,
-    }
-
-    next.memoryGb = Math.max(1, Math.min(16, Number(next.memoryGb) || 4))
-    next.instanceDirectory =
-      normalizeString(next.instanceDirectory) || getDefaultLauncherSettings().instanceDirectory
-    next.packManifestUrl = normalizeString(next.packManifestUrl)
+    })
 
     launcherStore.set('settings', next)
 
@@ -53,11 +62,12 @@ export const createSettingsService = () => {
       return true
     }
 
-    return 'instanceDirectory' in partial || 'packManifestUrl' in partial
+    return 'instanceDirectory' in partial
   }
 
   return {
     getDefaultLauncherSettings,
+    getPackManifestUrl: () => DEFAULT_PACK_MANIFEST_URL,
     getSettings,
     saveSettings,
     shouldRefreshPackState,

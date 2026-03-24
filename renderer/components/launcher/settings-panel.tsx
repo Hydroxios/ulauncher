@@ -15,10 +15,7 @@ type SettingsPanelProps = {
   onPickInstanceDirectory: () => Promise<void>
   onRepairPack: () => Promise<void>
   onSaveSettings: (partial: Partial<LauncherSettings>) => Promise<void>
-  onSetPackManifestInput: (value: string) => void
   onToggleSettings: () => void
-  packManifestInput: string
-  persistManifestUrl: () => Promise<void>
 }
 
 export const SettingsPanel = ({
@@ -28,10 +25,7 @@ export const SettingsPanel = ({
   onPickInstanceDirectory,
   onRepairPack,
   onSaveSettings,
-  onSetPackManifestInput,
   onToggleSettings,
-  packManifestInput,
-  persistManifestUrl,
 }: SettingsPanelProps) => {
   return (
     <section
@@ -61,55 +55,33 @@ export const SettingsPanel = ({
 
           {launcherSettings ? (
             <div className="mt-6 grid gap-4">
-              <div className="grid gap-6 xl:grid-cols-2">
-                <label className="grid gap-2">
-                  <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-purple-300/80">
-                    URL du manifeste
-                  </span>
-                  <input
-                    type="url"
-                    value={packManifestInput}
-                    onChange={(event) => onSetPackManifestInput(event.target.value)}
-                    onBlur={() => void persistManifestUrl()}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        void persistManifestUrl()
-                      }
-                    }}
-                    placeholder="https://..."
-                    className="border border-white/10 bg-black/40 px-4 py-3 text-sm text-white shadow-inner backdrop-blur-sm outline-none transition-all placeholder:text-white/30 focus:border-purple-500 focus:bg-black/60"
-                  />
-                </label>
-
-                <div className="grid gap-2">
-                  <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-purple-300/80">
-                    Mémoire allouée
-                  </span>
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_100px]">
-                    <div className="flex items-center">
-                      <input
-                        type="range"
-                        min="1"
-                        max="16"
-                        value={launcherSettings.memoryGb}
-                        onChange={(event) =>
-                          void onSaveSettings({ memoryGb: Number(event.target.value) })
-                        }
-                        className="h-2 w-full appearance-none rounded-full bg-white/10 outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 hover:[&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(168,85,247,0.5)]"
-                      />
-                    </div>
+              <div className="grid gap-2">
+                <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-purple-300/80">
+                  Mémoire allouée
+                </span>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_100px]">
+                  <div className="flex items-center">
                     <input
-                      type="number"
+                      type="range"
                       min="1"
                       max="16"
                       value={launcherSettings.memoryGb}
                       onChange={(event) =>
                         void onSaveSettings({ memoryGb: Number(event.target.value) })
                       }
-                      className="border border-white/10 bg-black/40 px-4 py-3 text-sm text-white shadow-inner backdrop-blur-sm outline-none transition-all focus:border-purple-500 focus:bg-black/60"
+                      className="h-2 w-full appearance-none rounded-full bg-white/10 outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500 hover:[&::-webkit-slider-thumb]:bg-purple-400 [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(168,85,247,0.5)]"
                     />
                   </div>
+                  <input
+                    type="number"
+                    min="1"
+                    max="16"
+                    value={launcherSettings.memoryGb}
+                    onChange={(event) =>
+                      void onSaveSettings({ memoryGb: Number(event.target.value) })
+                    }
+                    className="border border-white/10 bg-black/40 px-4 py-3 text-sm text-white shadow-inner backdrop-blur-sm outline-none transition-all focus:border-purple-500 focus:bg-black/60"
+                  />
                 </div>
               </div>
 

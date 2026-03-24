@@ -31,7 +31,7 @@ npm run build
 Au démarrage, le launcher:
 1. restaure la session Microsoft si un `refreshToken` est présent
 2. charge les settings locaux
-3. récupère l'état du pack à partir de l'URL du manifeste
+3. récupère l'état du pack à partir de `MANIFEST_URL`
 
 Au clic sur `Play`, le launcher:
 1. recharge la session Microsoft
@@ -52,7 +52,6 @@ type LauncherSettings = {
   memoryGb: number
   instanceDirectory: string
   openLogsOnLaunch: boolean
-  packManifestUrl: string
 }
 ```
 
@@ -60,7 +59,6 @@ Valeurs importantes:
 - `memoryGb`: mémoire max allouée au jeu
 - `instanceDirectory`: dossier racine de l'instance Minecraft
 - `openLogsOnLaunch`: ouvre la fenêtre de logs avant le lancement
-- `packManifestUrl`: URL HTTP(S) du manifeste distant
 
 ## Manifest du pack
 
@@ -172,15 +170,15 @@ Ensuite `minecraft-launcher-core` lance ce profil custom avec:
 - `version.number = minecraftVersion`
 - `version.custom = fabricProfileId`
 
-## Variable d'environnement optionnelle
+## Variable d'environnement du manifeste
 
-Tu peux préconfigurer l'URL du manifeste via:
+Le launcher lit l'URL du manifeste depuis l'environnement:
 
 ```bash
-UZTIK_PACK_MANIFEST_URL=https://example.com/manifest.json
+MANIFEST_URL=https://example.com/manifest.json
 ```
 
-Si elle est définie, elle sert de valeur par défaut pour `packManifestUrl`.
+Cette valeur n'est pas stockée dans les settings locaux et n'est pas éditable dans l'UI.
 
 ## Auth Microsoft
 

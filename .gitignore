@@ -12,3 +12,7 @@ next-env.d.ts
 /app
 dist
 pack.zip
+
+.env
+
+tsconfig.tsbuildinfo

@@ -25,11 +25,8 @@ export default function HomePage() {
     openExternal,
     openLogsNow,
     packConfigured,
-    packManifestInput,
-    persistManifestUrl,
     saveSettings,
     setIsSettingsOpen,
-    setPackManifestInput,
     skinPortraitUrl,
     handleCloseGame,
     handleLaunch,
@@ -86,10 +83,7 @@ export default function HomePage() {
                     onPickInstanceDirectory={handlePickInstanceDirectory}
                     onRepairPack={handleRepairPack}
                     onSaveSettings={saveSettings}
-                    onSetPackManifestInput={setPackManifestInput}
                     onToggleSettings={() => setIsSettingsOpen(false)}
-                    packManifestInput={packManifestInput}
-                    persistManifestUrl={persistManifestUrl}
                   />
                 ) : (
                   <OverviewPanel

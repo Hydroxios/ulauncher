@@ -81,12 +81,10 @@ const toLaunchProgressState = (payload: LauncherProgressPayload): LaunchProgress
 const applyLauncherResponseState = (
   response: LauncherActionResponse,
   setLauncherSettings: (value: LauncherSettings | null) => void,
-  setLauncherPack: Dispatch<SetStateAction<LauncherPackState | null>>,
-  setPackManifestInput: (value: string) => void
+  setLauncherPack: Dispatch<SetStateAction<LauncherPackState | null>>
 ) => {
   if (response.settings) {
     setLauncherSettings(response.settings)
-    setPackManifestInput(response.settings.packManifestUrl)
   }
 
   if (response.pack) {
@@ -101,7 +99,6 @@ export const useLauncherHomeState = () => {
   const [error, setError] = useState<string | null>(null)
   const [launcherSettings, setLauncherSettings] = useState<LauncherSettings | null>(null)
   const [launcherPack, setLauncherPack] = useState<LauncherPackState | null>(null)
-  const [packManifestInput, setPackManifestInput] = useState('')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isLaunching, setIsLaunching] = useState(false)
   const [isGameRunning, setIsGameRunning] = useState(false)
@@ -160,7 +157,6 @@ export const useLauncherHomeState = () => {
 
         setLauncherSettings(response.settings)
         setLauncherPack(response.pack)
-        setPackManifestInput(response.settings.packManifestUrl)
       } catch {
         if (!cancelled) {
           setLauncherPack(null)
@@ -218,24 +214,11 @@ export const useLauncherHomeState = () => {
     const response = await launcherIpc.saveSettings(partial)
 
     if (response.ok) {
-      applyLauncherResponseState(
-        response,
-        setLauncherSettings,
-        setLauncherPack,
-        setPackManifestInput
-      )
+      applyLauncherResponseState(response, setLauncherSettings, setLauncherPack)
       return
     }
 
     setError(response.error ?? 'Impossible de sauvegarder les settings.')
-  }
-
-  const persistManifestUrl = async () => {
-    if (!launcherSettings || packManifestInput === launcherSettings.packManifestUrl) {
-      return
-    }
-
-    await saveSettings({ packManifestUrl: packManifestInput.trim() })
   }
 
   const handleMicrosoftLogin = async () => {
@@ -279,12 +262,7 @@ export const useLauncherHomeState = () => {
     const response = await launcherIpc.pickInstanceDirectory()
 
     if (response.ok) {
-      applyLauncherResponseState(
-        response,
-        setLauncherSettings,
-        setLauncherPack,
-        setPackManifestInput
-      )
+      applyLauncherResponseState(response, setLauncherSettings, setLauncherPack)
       return
     }
 
@@ -305,12 +283,7 @@ export const useLauncherHomeState = () => {
     const response = await launcherIpc.repairPack(launcherSettings)
 
     if (response.ok) {
-      applyLauncherResponseState(
-        response,
-        setLauncherSettings,
-        setLauncherPack,
-        setPackManifestInput
-      )
+      applyLauncherResponseState(response, setLauncherSettings, setLauncherPack)
       return
     }
 
@@ -393,12 +366,9 @@ export const useLauncherHomeState = () => {
     launcherSettings,
     openExternal,
     openLogsNow,
-    packConfigured: Boolean(launcherSettings?.packManifestUrl),
-    packManifestInput,
-    persistManifestUrl,
+    packConfigured: Boolean(launcherPack?.manifestUrl),
     saveSettings,
     setIsSettingsOpen,
-    setPackManifestInput,
     skinPortraitUrl: account ? `https://mc-heads.net/avatar/${account.uuid}` : null,
     handleCloseGame,
     handleLaunch,

@@ -5,7 +5,6 @@ import { Worker } from 'worker_threads'
 import type {
   InstalledPackState,
   LauncherPackState,
-  LauncherSettings,
   PackManifest,
 } from '../../shared/launcher'
 import {
@@ -252,10 +251,13 @@ export const createPackService = ({ emitLauncherEvent }: PackServiceDependencies
     return fs.existsSync(getFabricProfilePath(instanceDirectory, installedState.fabricProfileId))
   }
 
-  const resolvePackState = async (settings: LauncherSettings): Promise<LauncherPackState> => {
-    const manifestUrl = normalizeString(settings.packManifestUrl)
+  const resolvePackState = async (
+    instanceDirectory: string,
+    manifestUrl: string
+  ): Promise<LauncherPackState> => {
+    const normalizedManifestUrl = normalizeString(manifestUrl)
 
-    if (!manifestUrl) {
+    if (!normalizedManifestUrl) {
       return {
         manifestUrl: null,
         packVersion: null,
@@ -268,16 +270,12 @@ export const createPackService = ({ emitLauncherEvent }: PackServiceDependencies
     }
 
     try {
-      const manifest = await fetchPackManifest(manifestUrl)
-      const installedState = await readInstalledPackState(settings.instanceDirectory)
-      const installed = isInstalledPackUpToDate(
-        installedState,
-        manifest,
-        settings.instanceDirectory
-      )
+      const manifest = await fetchPackManifest(normalizedManifestUrl)
+      const installedState = await readInstalledPackState(instanceDirectory)
+      const installed = isInstalledPackUpToDate(installedState, manifest, instanceDirectory)
 
       return {
-        manifestUrl,
+        manifestUrl: normalizedManifestUrl,
         packVersion: manifest.packVersion,
         minecraftVersion: manifest.minecraftVersion,
         fabricLoaderVersion: manifest.fabricLoaderVersion,
@@ -291,7 +289,7 @@ export const createPackService = ({ emitLauncherEvent }: PackServiceDependencies
       }
     } catch (error) {
       return {
-        manifestUrl,
+        manifestUrl: normalizedManifestUrl,
         packVersion: null,
         minecraftVersion: null,
         fabricLoaderVersion: null,

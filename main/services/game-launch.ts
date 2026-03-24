@@ -70,11 +70,12 @@ export const createGameLaunchService = ({
     }
 
     const settings = settingsService.saveSettings(partial)
+    const manifestUrl = settingsService.getPackManifestUrl()
 
-    if (!settings.packManifestUrl) {
+    if (!manifestUrl) {
       return {
         ok: false,
-        error: 'Configure une URL de manifeste de pack avant de lancer le jeu.',
+        error: 'Definis MANIFEST_URL dans lenvironnement avant de lancer le jeu.',
       }
     }
 
@@ -90,7 +91,7 @@ export const createGameLaunchService = ({
 
       const preparedPack = await packService.preparePack(
         settings.instanceDirectory,
-        settings.packManifestUrl,
+        manifestUrl,
         sender
       )
       const javaPath = await javaService.ensureJavaRuntime(
@@ -262,7 +263,7 @@ export const createGameLaunchService = ({
       return {
         ok: true,
         settings,
-        pack: await packService.resolvePackState(settings),
+        pack: await packService.resolvePackState(settings.instanceDirectory, manifestUrl),
       }
     } catch (error) {
       activeMinecraftProcess = null
@@ -271,7 +272,7 @@ export const createGameLaunchService = ({
       return {
         ok: false,
         error: toErrorMessage(error),
-        pack: await packService.resolvePackState(settings),
+        pack: await packService.resolvePackState(settings.instanceDirectory, manifestUrl),
       }
     }
   }

@@ -50,7 +50,10 @@ export const registerIpcHandlers = ({
 
   ipcMain.handle(IPC_CHANNELS.launcherGetState, async () => {
     const settings = settingsService.saveSettings()
-    const pack = await packService.resolvePackState(settings)
+    const pack = await packService.resolvePackState(
+      settings.instanceDirectory,
+      settingsService.getPackManifestUrl()
+    )
 
     return {
       ok: true,
@@ -66,7 +69,10 @@ export const registerIpcHandlers = ({
       ok: true,
       settings,
       pack: settingsService.shouldRefreshPackState(partial)
-        ? await packService.resolvePackState(settings)
+        ? await packService.resolvePackState(
+            settings.instanceDirectory,
+            settingsService.getPackManifestUrl()
+          )
         : undefined,
     }
   })
@@ -87,7 +93,10 @@ export const registerIpcHandlers = ({
     const settings = settingsService.saveSettings({
       instanceDirectory: result.filePaths[0],
     })
-    const pack = await packService.resolvePackState(settings)
+    const pack = await packService.resolvePackState(
+      settings.instanceDirectory,
+      settingsService.getPackManifestUrl()
+    )
 
     return {
       ok: true,
@@ -126,7 +135,10 @@ export const registerIpcHandlers = ({
     return {
       ok: true,
       settings,
-      pack: await packService.resolvePackState(settings),
+      pack: await packService.resolvePackState(
+        settings.instanceDirectory,
+        settingsService.getPackManifestUrl()
+      ),
     }
   })
 
